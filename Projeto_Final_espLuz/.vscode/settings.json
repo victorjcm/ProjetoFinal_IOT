@@ -3,7 +3,7 @@
   "idf.extensionActivationMode": "always",
   "idf.openOcdConfigs": ["board/esp32-wrover-kit-3.3v.cfg"],
   "idf.portWin": "COM7",
-  "idf.currentSetup": "C:\\esp\\v6.0\\esp-idf",
+  "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
   },
@@ -11,7 +11,7 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=c:\\Users\\Station\\Documents\\IoT\\Projeto_Final\\build"
+    "--compile-commands-dir=c:\\Users\\Station\\Documents\\IoT\\Projeto_Final_esplipe\\build"
   ],
   "idf.flashType": "UART"
 }
