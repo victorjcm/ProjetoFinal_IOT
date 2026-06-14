@@ -9,15 +9,15 @@
 #include "esp_event.h"
 #include "esp_netif.h"
 #include "esp_log.h"
-#include "driver/ledc.h" // Atualizado para a v6
-#include "driver/gpio.h" // Atualizado para a v6
+#include "driver/ledc.h" 
+#include "driver/gpio.h" 
 #include "coap3/coap.h"      // Biblioteca do CoAP
 
 // ==========================================
 // CONFIGURAÇÕES DE REDE
 // ==========================================
-#define WIFI_SSID      "ESP_TEST"
-#define WIFI_PASS      "victor2525"
+#define WIFI_SSID      "Pitucha Mercu Novo"
+#define WIFI_PASS      "pituxa1989"
 
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
@@ -116,7 +116,7 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
     if (strcmp(comando, "INVERTER") == 0) {
         if (modo_automatico) {
             ESP_LOGW(TAG, "Intervencao Virtual: Desativando Modo Automatico.");
-            modo_automatico = false; // Humano assumiu o controle pela nuvem
+            modo_automatico = false; // assumir o controle pela nuvem
         }
         mover_cortina(!cortina_aberta);
         
@@ -159,7 +159,7 @@ void app_main(void)
 {
     ESP_LOGI(TAG, "Iniciando Node da Cortina (Grupo 4)...");
 
-    // 1. Inicializações de Memória e Rede
+    //  Inicializações de Memória e Rede
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
@@ -168,7 +168,7 @@ void app_main(void)
     esp_netif_init();
     esp_event_loop_create_default();
 
-    // 2. Configurar Botão
+    //  Configurar Botão
     gpio_config_t config_botao = {
         .intr_type = GPIO_INTR_DISABLE,
         .mode = GPIO_MODE_INPUT,
@@ -178,7 +178,7 @@ void app_main(void)
     };
     gpio_config(&config_botao);
 
-    // 3. Configurar PWM do Motor
+    //  Configurar PWM do Motor
     ledc_timer_config_t ledc_timer = {
         .speed_mode       = LEDC_LOW_SPEED_MODE,
         .timer_num        = LEDC_TIMER_0,
@@ -199,13 +199,13 @@ void app_main(void)
     };
     ledc_channel_config(&ledc_channel);
 
-    // 4. Iniciar motor na posição padrão
+    //  Iniciar motor na posição padrão
     mover_cortina(true);
 
-    // 5. Conectar no Wi-Fi
+    //  Conectar no Wi-Fi
     wifi_init_sta(); 
 
-    // 6. Ligar o servidor CoAP em segundo plano
+    //  Ligar o servidor CoAP em segundo plano
     xTaskCreate(coap_server_task, "coap_server", 8192, NULL, 5, NULL);
 
     ESP_LOGI(TAG, "===============================================");
@@ -214,7 +214,7 @@ void app_main(void)
 
     int estado_anterior_botao = 1; 
 
-    // 7. Loop de monitoramento do botão físico
+    //  Loop de monitoramento do botão físico
     while (1) {
         int estado_atual_botao = gpio_get_level(BOTAO_PIN);
 
@@ -222,19 +222,19 @@ void app_main(void)
         if (estado_atual_botao == 0 && estado_anterior_botao == 1) {
             ESP_LOGI(TAG, "Comando MANUAL detectado (Botao Fisico)!");
             
-            // A Regra de Ouro:
+            
             if (modo_automatico) {
                 ESP_LOGW(TAG, "Intervencao Fisica: Desativando Modo Automatico.");
-                modo_automatico = false; // Humano assumiu o controle fisicamente
+                modo_automatico = false; // assumir o controle com o botao fisico
             }
             
             mover_cortina(!cortina_aberta);
             
-            // Debounce para não disparar várias vezes
+            // Debounce 
             vTaskDelay(pdMS_TO_TICKS(300)); 
         }
 
         estado_anterior_botao = estado_atual_botao;
-        vTaskDelay(pdMS_TO_TICKS(20)); // Pausa curta para não travar a CPU
+        vTaskDelay(pdMS_TO_TICKS(20)); // Pausa para não travar a CPU
     }
 }

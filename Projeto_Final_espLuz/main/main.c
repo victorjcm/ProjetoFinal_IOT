@@ -11,20 +11,20 @@
 #include "esp_log.h"
 #include "esp_adc/adc_oneshot.h"
 
-// Inclusão da biblioteca CoAP do ESP-IDF
+// Inclusão da biblioteca CoAP 
 #include "coap3/coap.h"
 
 // ==========================================
 // CONFIGURAÇÕES DE REDE E GATEWAY
 // ==========================================
-#define WIFI_SSID      "ESP_TEST"
-#define WIFI_PASS      "victor2525"
+#define WIFI_SSID      "Pitucha Mercu Novo"
+#define WIFI_PASS      "pituxa1989"
 
-// IP do Computador (Gateway onde rodará o Python)
-#define GATEWAY_IP     "10.156.27.195"
+// IPdo gateway
+#define GATEWAY_IP     "192.168.0.17"
 // Porta padrão do protocolo CoAP
 #define COAP_PORT      5683 
-// Caminho do recurso onde vamos postar os dados
+// Caminho do recurso dos dados
 #define COAP_URI_PATH  "sensor_luz"
 
 static EventGroupHandle_t s_wifi_event_group;
@@ -122,7 +122,7 @@ void coap_client_task(void *p) {
         adc_oneshot_read(adc1_handle, LDR_CANAL, &valor_ldr);
         sprintf(valor_str, "%d", valor_ldr);
 
-        // Cria o pacote (PDU) do tipo POST (Sem confirmação de recebimento obrigatória para ser mais rápido)
+        // Cria o pacote (PDU) do tipo POST
         coap_pdu_t *pdu = coap_pdu_init(COAP_MESSAGE_NON, COAP_REQUEST_CODE_POST, coap_new_message_id(session), coap_session_max_pdu_size(session));
         
         if (pdu) {
@@ -140,8 +140,6 @@ void coap_client_task(void *p) {
 
         // Dá tempo ao FreeRTOS para processar o tráfego da rede
         coap_io_process(ctx, 1000); 
-
-        // Aguarda 3 segundos (+ 1 seg do processamento = envia a cada 4 segundos)
         vTaskDelay(pdMS_TO_TICKS(3000));
     }
 }
