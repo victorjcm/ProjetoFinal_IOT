@@ -16,8 +16,8 @@
 // ==========================================
 // CONFIGURAÇÕES DE REDE
 // ==========================================
-#define WIFI_SSID      "Pitucha Mercu Novo"
-#define WIFI_PASS      "pituxa1989"
+#define WIFI_SSID      "MERCUSYS_7E02"
+#define WIFI_PASS      "70960594"
 
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
@@ -30,11 +30,11 @@ static const char *TAG = "ESP_CORTINA";
 #define BOTAO_PIN 27     // Botão no pino D27
 
 #define FREQ_HZ 50
-#define SERVO_POS_INICIAL 205   // Posição Aberta (0 graus)
-#define SERVO_POS_FINAL   614   // Posição Fechada (90 graus)
+#define SERVO_POS_INICIAL   614  // Posição Aberta (0 graus)
+#define SERVO_POS_FINAL   205   // Posição Fechada (90 graus)
 
 // Variáveis globais de controle
-bool cortina_aberta = true;
+bool cortina_aberta = false; // Assume que a cortina inicia fechada
 bool modo_automatico = true; // Inicia obedecendo o sensor de luz
 
 // ==========================================
@@ -102,7 +102,6 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
     size_t size;
     const uint8_t *data;
     
-    // Pega a mensagem recebida
     coap_get_data(request, &size, &data);
     
     char comando[16];
@@ -112,12 +111,23 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
 
     ESP_LOGI(TAG, "[CoAP] Comando recebido do Gateway: %s", comando);
 
-    // Lógica de Modos e Inversão
-    if (strcmp(comando, "INVERTER") == 0) {
-        if (modo_automatico) {
-            ESP_LOGW(TAG, "Intervencao Virtual: Desativando Modo Automatico.");
-            modo_automatico = false; // assumir o controle pela nuvem
+    // Lógica de Estados Absolutos
+    if (strcmp(comando, "ABRIR") == 0) {
+        if (!cortina_aberta) {
+            mover_cortina(true);
+        } else {
+            ESP_LOGI(TAG, "Comando ignorado: Cortina ja esta ABERTA.");
         }
+        
+    } else if (strcmp(comando, "FECHAR") == 0) {
+        if (cortina_aberta) {
+            mover_cortina(false);
+        } else {
+            ESP_LOGI(TAG, "Comando ignorado: Cortina ja esta FECHADA.");
+        }
+        
+    // Mantido por compatibilidade ou para o botão físico (se necessário no futuro)
+    } else if (strcmp(comando, "INVERTER") == 0) {
         mover_cortina(!cortina_aberta);
         
     } else if (strcmp(comando, "AUTO_ON") == 0) {
@@ -129,7 +139,6 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
         ESP_LOGI(TAG, "Modo Automatico: DESATIVADO");
     }
 
-    // Confirma pro Gateway que o comando foi executado
     coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
 }
 
@@ -139,6 +148,14 @@ static void coap_server_task(void *p) {
         ESP_LOGE(TAG, "Falha ao criar contexto CoAP");
         vTaskDelete(NULL);
     }
+
+    // Abre socket UDP na porta 5683 para receber comandos do gateway
+    coap_address_t listen_addr;
+    coap_address_init(&listen_addr);
+    listen_addr.addr.sin.sin_family = AF_INET;
+    listen_addr.addr.sin.sin_addr.s_addr = INADDR_ANY;
+    listen_addr.addr.sin.sin_port = htons(5683);
+    coap_new_endpoint(ctx, &listen_addr, COAP_PROTO_UDP);
 
     // Rota: coap://IP_DA_CORTINA/cortina
     coap_resource_t *res = coap_resource_init(coap_make_str_const("cortina"), 0);
@@ -200,7 +217,7 @@ void app_main(void)
     ledc_channel_config(&ledc_channel);
 
     //  Iniciar motor na posição padrão
-    mover_cortina(true);
+    mover_cortina(false); // Começa com a cortina fechada
 
     //  Conectar no Wi-Fi
     wifi_init_sta(); 
