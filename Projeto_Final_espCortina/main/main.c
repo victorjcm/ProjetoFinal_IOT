@@ -26,7 +26,7 @@ static const char *TAG = "ESP_CORTINA";
 // ==========================================
 // CONFIGURAÇÕES DO HARDWARE (SERVO E BOTÃO)
 // ==========================================
-#define SERVO_PIN 13     // Servomotor no pino D13
+#define SERVO_PIN 13    // Servomotor no pino D13
 #define BOTAO_PIN 27     // Botão no pino D27
 
 #define FREQ_HZ 50
@@ -88,9 +88,9 @@ void wifi_init_sta(void) {
     esp_wifi_set_mode(WIFI_MODE_STA);
     esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
     esp_wifi_start();
-
-    ESP_LOGI(TAG, "Aguardando conexão com %s...", WIFI_SSID);
-    xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+    
+    // A trava de bloqueio (xEventGroupWaitBits) foi REMOVIDA daqui! 
+    // Agora o ESP32 não congela esperando o roteador ligar.
 }
 
 // ==========================================
@@ -126,7 +126,7 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
             ESP_LOGI(TAG, "Comando ignorado: Cortina ja esta FECHADA.");
         }
         
-    // Mantido por compatibilidade ou para o botão físico (se necessário no futuro)
+    // Mantido por compatibilidade ou para o botão virtual
     } else if (strcmp(comando, "INVERTER") == 0) {
         mover_cortina(!cortina_aberta);
         
@@ -140,9 +140,22 @@ static void hnd_put_cortina(coap_resource_t *resource, coap_session_t *session,
     }
 
     coap_pdu_set_code(response, COAP_RESPONSE_CODE_CHANGED);
+    
+    // Muda de COAP_RESPONSE_CODE_CHANGED para CONTENT, forçando o envio da string
+    coap_pdu_set_code(response, COAP_RESPONSE_CODE_CONTENT);
+    
+    // Injeta o status físico de retorno no pacote
+    const char* status_motor = cortina_aberta ? "ABERTA" : "FECHADA";
+    coap_add_data(response, strlen(status_motor), (const uint8_t *)status_motor);
 }
 
 static void coap_server_task(void *p) {
+    // === A TRAVA VEIO PARA CÁ ===
+    // O Servidor CoAP só liga e abre as portas quando o Wi-Fi conectar.
+    ESP_LOGI(TAG, "Rede CoAP aguardando conexao Wi-Fi em segundo plano...");
+    xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+    // ============================
+
     coap_context_t *ctx = coap_new_context(NULL);
     if (!ctx) {
         ESP_LOGE(TAG, "Falha ao criar contexto CoAP");
@@ -219,14 +232,14 @@ void app_main(void)
     //  Iniciar motor na posição padrão
     mover_cortina(false); // Começa com a cortina fechada
 
-    //  Conectar no Wi-Fi
+    //  Conectar no Wi-Fi (Agora passa direto, sem travar o código!)
     wifi_init_sta(); 
 
     //  Ligar o servidor CoAP em segundo plano
     xTaskCreate(coap_server_task, "coap_server", 8192, NULL, 5, NULL);
 
     ESP_LOGI(TAG, "===============================================");
-    ESP_LOGI(TAG, " SISTEMA PRONTO! Modo Automatico = ATIVADO");
+    ESP_LOGI(TAG, " SISTEMA FISICO PRONTO PARA USO IMEDIATO!");
     ESP_LOGI(TAG, "===============================================");
 
     int estado_anterior_botao = 1; 
@@ -238,7 +251,6 @@ void app_main(void)
         // Se pressionado (transição de 1 para 0)
         if (estado_atual_botao == 0 && estado_anterior_botao == 1) {
             ESP_LOGI(TAG, "Comando MANUAL detectado (Botao Fisico)!");
-            
             
             if (modo_automatico) {
                 ESP_LOGW(TAG, "Intervencao Fisica: Desativando Modo Automatico.");

@@ -21,7 +21,7 @@
 #define WIFI_PASS      "70960594"
 
 // IPdo gateway
-#define GATEWAY_IP     "192.168.1.101"
+#define GATEWAY_IP     "192.168.1.108"
 // Porta padrão do protocolo CoAP
 #define COAP_PORT      5683 
 // Caminho do recurso dos dados
