@@ -17,11 +17,11 @@
 // ==========================================
 // CONFIGURAÇÕES DE REDE E GATEWAY
 // ==========================================
-#define WIFI_SSID      "Pitucha Mercu Novo"
-#define WIFI_PASS      "pituxa1989"
+#define WIFI_SSID      "MERCUSYS_7E02"
+#define WIFI_PASS      "70960594"
 
 // IPdo gateway
-#define GATEWAY_IP     "192.168.0.17"
+#define GATEWAY_IP     "192.168.1.105"
 // Porta padrão do protocolo CoAP
 #define COAP_PORT      5683 
 // Caminho do recurso dos dados

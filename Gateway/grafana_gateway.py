@@ -9,8 +9,8 @@ from aiohttp import web
 # ==========================================
 # 1. CONFIGURAÇÕES (Verifique seus IPs!)
 # ==========================================
-IP_ESP_CORTINA = "192.168.0.251" 
-IP_MEU_COMPUTADOR = "192.168.0.17"
+IP_ESP_CORTINA = "192.168.1.113" 
+IP_MEU_COMPUTADOR = "192.168.1.105"
 
 
 loop = None

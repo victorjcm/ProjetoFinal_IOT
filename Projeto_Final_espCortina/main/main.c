@@ -16,8 +16,8 @@
 // ==========================================
 // CONFIGURAÇÕES DE REDE
 // ==========================================
-#define WIFI_SSID      "Pitucha Mercu Novo"
-#define WIFI_PASS      "pituxa1989"
+#define WIFI_SSID      "MERCUSYS_7E02"
+#define WIFI_PASS      "70960594"
 
 static EventGroupHandle_t s_wifi_event_group;
 #define WIFI_CONNECTED_BIT BIT0
